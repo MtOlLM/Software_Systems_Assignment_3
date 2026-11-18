@@ -61,7 +61,14 @@ common_header_t *freelist_allocate(size_t size)
 void freelist_insert(common_header_t *block)
 {
     common_header_t *current = list_head;
-    common_header_t *previous = list_head;
+    common_header_t *previous = NULL;
+
+    //if the memory is full already
+    if(list_head == NULL) {
+        list_head = block;
+        block->next = NULL;
+        return;
+    }
 
     while (current != NULL) {
         if(block < current){
