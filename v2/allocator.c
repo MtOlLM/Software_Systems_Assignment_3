@@ -71,6 +71,11 @@ size_t allocator_free_mem_size()
     return freelist_free_mem_size();
 }
 
+void allocator_stats(size_t* N, size_t* F, size_t* L)
+{
+    freelist_stats(N,F,L);
+}
+
 size_t allocator_req_mem(size_t payload_size)
 {
     //oversized payload

@@ -26,7 +26,12 @@ void freelist_insert_and_merge(common_header_t *block);
 //print the free list
 void freelist_dump();
 
-//calculate total free memory size
+//utility functions
 size_t freelist_free_mem_size();
+size_t freelist_largest_free_block();
+size_t freelist_num_free_block();
+//three separate functions will go through the list three times
+//inefficient for long freelist
+void freelist_stats(size_t* N, size_t* F, size_t* L);
 
 #endif

@@ -154,3 +154,49 @@ size_t freelist_free_mem_size()
 
     return total;
 }
+
+size_t freelist_largest_free_block()
+{
+    size_t max = 0;
+    common_header_t *current = list_head;
+
+    while (current != NULL) {
+        if(current->size > max) max = current->size;
+        current = current->next;
+    }
+
+    return max;
+}
+
+size_t freelist_num_free_block()
+{
+    size_t num = 0;
+    common_header_t *current = list_head;
+
+    while (current != NULL) {
+        num += 1;
+        current = current->next;
+    }
+
+    return num;
+}
+
+void freelist_stats(size_t* N, size_t* F, size_t* L){
+    size_t n = 0;
+    size_t f = 0;
+    size_t l = 0;
+
+    common_header_t *current = list_head;
+    
+    while (current != NULL) {
+        n += 1;
+        if(current->size > l) l = current->size;
+        f += (size_t)current->size;
+
+        current = current->next;
+    }
+
+    *N = n;
+    *F = f;
+    *L = l;
+}

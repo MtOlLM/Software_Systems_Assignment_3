@@ -3,7 +3,7 @@
 
 #include <sys/mman.h> 
 
-#define MEM_SIZE 1024
+#define MEM_SIZE 10*1024*1024 //10MB of memory
 
 //get memory from OS using mmap
 void *get_mem_block(void *addr, size_t mem_size);
@@ -17,6 +17,7 @@ void sfree(void *mem_ptr);
 //utility functions
 void allocator_list_dump();
 size_t allocator_free_mem_size();
+void allocator_stats(size_t* N, size_t* F, size_t* L);
 //return -1 for oversized payload
 size_t allocator_req_mem(size_t payload_size);
 
