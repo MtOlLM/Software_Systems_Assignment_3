@@ -15,50 +15,82 @@ common_header_t *freelist_allocate(size_t size)
 {
     common_header_t *current = list_head;
     common_header_t *previous = NULL;
+    common_header_t *min_current = list_head;
+    common_header_t *min_previous = NULL;
+    int min = -1;
+    int diff;
 
     while (current != NULL) {
-        //if the current block has enough space
-        if (current->size >= (int)size) {
-            int size_remained = current->size - (int)size - (int)sizeof(common_header_t);
+        diff = current->size - (int)size;
 
-            //if there is enough space for another header
-            if (size_remained >= 0) {
-                common_header_t *remainder;
-                remainder = (common_header_t *)((char *)current + sizeof(common_header_t) + size);
-                remainder->size = size_remained;
-                remainder->next = current->next;
-
-                if (previous == NULL) {
-                    list_head = remainder;
-                }
-                else {
-                    previous->next = remainder;
-                }
-
-                current->size = (int)size;
-                current->next = NULL;
-                return current;
-            }
-
-            //give away the whole block if there is no enough space for another header
-            if (previous == NULL) {
-                list_head = current->next;
-            } else {
-                previous->next = current->next;
-            }
-            current->next = NULL;
-            //returns the pointer to the header
-            return current;
+        //if the current block has a smaller but enough space
+        //or if the current block is the first block with enough space
+        if (diff >= 0 && (diff < min || min == -1)) {
+            min_current = current;
+            min_previous = previous;
+            min = diff;
         }
 
         previous = current;
         current = current->next;
     }
 
-    return NULL;
+    //no big enough block found
+    if (min == -1){
+        return NULL;
+    }
+
+    int size_remained = min - (int)sizeof(common_header_t);
+
+    //if there is enough space for another header
+    if (size_remained >= 0) {
+        common_header_t *remainder;
+        remainder = (common_header_t *)((char *)min_current + sizeof(common_header_t) + size);
+        remainder->size = size_remained;
+        remainder->next = min_current->next;
+
+        if (min_previous == NULL) {
+            list_head = remainder;
+        }
+        else {
+            min_previous->next = remainder;
+        }
+
+        min_current->size = (int)size;
+        min_current->next = NULL;
+        return min_current;
+    }
+
+    //give away the whole block if there is no enough space for another header
+    if (min_previous == NULL) {
+        list_head = min_current->next;
+    } else {
+        min_previous->next = min_current->next;
+    }
+    min_current->next = NULL;
+    //returns the pointer to the header
+    return min_current;
+
 }
 
-void freelist_insert(common_header_t *block)
+void freelist_check_and_merge(common_header_t *block)
+{
+    if (block->next == NULL){
+        return;
+    }
+
+    int gap, length;
+    //cast both pointers to char * to get the right pointer arithmetics
+    gap = (char *)block->next - (char *)block;
+    length = block->size + (int)sizeof(common_header_t);
+    
+    if (gap == length){
+        block->size = block->size + (int)sizeof(common_header_t) + block->next->size;
+        block->next = block->next->next;
+    }
+}
+
+void freelist_insert_and_merge(common_header_t *block)
 {
     common_header_t *current = list_head;
     common_header_t *previous = NULL;
@@ -71,10 +103,16 @@ void freelist_insert(common_header_t *block)
     }
 
     while (current != NULL) {
-        if(block < current){
-            if (current != list_head) previous->next = block;
-            else list_head = block;
+        if(block < current) {
             block->next = current;
+            freelist_check_and_merge(block);
+            
+            if (current != list_head){
+                previous->next = block;
+                freelist_check_and_merge(previous);
+            }
+            else list_head = block;
+
             return;
         }
 
@@ -85,6 +123,7 @@ void freelist_insert(common_header_t *block)
     //getting here means the block should be added to the end of the list
     previous->next = block;
     block->next = NULL;
+    freelist_check_and_merge(previous);
 }
 
 void freelist_dump()

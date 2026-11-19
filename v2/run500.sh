@@ -1,5 +1,5 @@
-for i in {1..1000}; do
+for i in {1..500}; do
     ./mem_allocator
     #sleep to pass a different seed to the pseudorandom nuumber generator
-    sleep 0.1
+    sleep 1
 done

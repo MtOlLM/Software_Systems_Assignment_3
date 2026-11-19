@@ -11,7 +11,7 @@ void *get_mem_block(void *addr, size_t mem_size);
 //allocate memory
 void *smalloc(size_t num_bytes);
 
-//free allocated memory
+//free allocated memory, merge if possible
 void sfree(void *mem_ptr);
 
 //utility functions

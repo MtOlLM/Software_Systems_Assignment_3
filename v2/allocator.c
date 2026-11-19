@@ -58,7 +58,7 @@ void sfree(void *mem_ptr)
     common_header_t *header = (common_header_t *)((char *)mem_ptr - sizeof(common_header_t));
 
     // Insert the block to the free list
-    freelist_insert(header);
+    freelist_insert_and_merge(header);
 }
 
 void allocator_list_dump()
