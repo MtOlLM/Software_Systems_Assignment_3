@@ -11,7 +11,54 @@ void freelist_init(void *mem, size_t mem_size)
     list_head->next = NULL;
 }
 
-common_header_t *freelist_allocate(size_t size)
+common_header_t *freelist_allocate_first(size_t size)
+{
+    common_header_t *current = list_head;
+    common_header_t *previous = NULL;
+
+    while (current != NULL) {
+        //if the current block has enough space
+        if (current->size >= (int)size) {
+            int size_remained = current->size - (int)size - (int)sizeof(common_header_t);
+
+            //if there is enough space for another header
+            if (size_remained >= 0) {
+                common_header_t *remainder;
+                remainder = (common_header_t *)((char *)current + sizeof(common_header_t) + size);
+                remainder->size = size_remained;
+                remainder->next = current->next;
+
+                if (previous == NULL) {
+                    list_head = remainder;
+                }
+                else {
+                    previous->next = remainder;
+                }
+
+                current->size = (int)size;
+                current->next = NULL;
+                return current;
+            }
+
+            //give away the whole block if there is no enough space for another header
+            if (previous == NULL) {
+                list_head = current->next;
+            } else {
+                previous->next = current->next;
+            }
+            current->next = NULL;
+            //returns the pointer to the header
+            return current;
+        }
+
+        previous = current;
+        current = current->next;
+    }
+
+    return NULL;
+}
+
+common_header_t *freelist_allocate_best(size_t size)
 {
     common_header_t *current = list_head;
     common_header_t *previous = NULL;
@@ -124,6 +171,12 @@ void freelist_insert_and_merge(common_header_t *block)
     previous->next = block;
     block->next = NULL;
     freelist_check_and_merge(previous);
+}
+
+void freelist_insert(common_header_t *block)
+{
+    block->next = list_head;
+    list_head = block;
 }
 
 void freelist_dump()

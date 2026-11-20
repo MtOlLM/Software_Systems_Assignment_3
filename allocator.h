@@ -5,6 +5,11 @@
 
 #define MEM_SIZE 10*1024*1024 //10MB of memory
 
+//merge on and off
+#define MERGE 0
+//0 for first-fit and 1 for best-fit
+#define FIT_TYPE 1
+
 //get memory from OS using mmap
 void *get_mem_block(void *addr, size_t mem_size);
 

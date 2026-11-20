@@ -36,7 +36,10 @@ void *smalloc(size_t num_bytes)
         freelist_init(memory, MEM_SIZE);
     }
 
-    common_header_t *block = freelist_allocate(num_bytes);
+    common_header_t *block;
+
+    if(FIT_TYPE) block = freelist_allocate_best(num_bytes);
+    else block = freelist_allocate_first(num_bytes);
 
     if (block == NULL) {
         return NULL;
@@ -54,11 +57,10 @@ void sfree(void *mem_ptr)
         return;
     }
 
-    // Recover the metadata header preceding the payload
     common_header_t *header = (common_header_t *)((char *)mem_ptr - sizeof(common_header_t));
 
-    // Insert the block to the free list
-    freelist_insert_and_merge(header);
+    if(MERGE) freelist_insert_and_merge(header);
+    else freelist_insert(header);
 }
 
 void allocator_list_dump()

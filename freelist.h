@@ -14,14 +14,18 @@ struct __common_header_t {
 void freelist_init(void *mem, size_t mem_size);
 
 //allocate from the free list, returns the pointer to the header
+//first_fit version
+common_header_t *freelist_allocate_first(size_t size);
 //best-fit version
-common_header_t *freelist_allocate(size_t size);
+common_header_t *freelist_allocate_best(size_t size);
 
 //check if the block can merge with the next block, merge if so
 void freelist_check_and_merge(common_header_t *block);
 
 //insert the block to the free list, merge if possible
 void freelist_insert_and_merge(common_header_t *block);
+//add a block at the head of the free list
+void freelist_insert(common_header_t *block);
 
 //print the free list
 void freelist_dump();
