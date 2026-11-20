@@ -1,19 +1,17 @@
 #include "freelist.h"
 #include <stdio.h>
 
-//the list head can only be accessed in this file
-static common_header_t *list_head = NULL;
 
-void freelist_init(void *mem, size_t mem_size)
+void freelist_init(common_header_t **head, void *mem, size_t mem_size)
 {
-    list_head = (common_header_t *)mem;
-    list_head->size = (int)(mem_size - sizeof(common_header_t));
-    list_head->next = NULL;
+    *head = (common_header_t *)mem;
+    (*head)->size = (int)(mem_size - sizeof(common_header_t));
+    (*head)->next = NULL;
 }
 
-common_header_t *freelist_allocate_first(size_t size)
+common_header_t *freelist_allocate_first(common_header_t **head, size_t size)
 {
-    common_header_t *current = list_head;
+    common_header_t *current = *head;
     common_header_t *previous = NULL;
 
     while (current != NULL) {
@@ -29,7 +27,7 @@ common_header_t *freelist_allocate_first(size_t size)
                 remainder->next = current->next;
 
                 if (previous == NULL) {
-                    list_head = remainder;
+                    *head = remainder;
                 }
                 else {
                     previous->next = remainder;
@@ -42,7 +40,7 @@ common_header_t *freelist_allocate_first(size_t size)
 
             //give away the whole block if there is no enough space for another header
             if (previous == NULL) {
-                list_head = current->next;
+                *head = current->next;
             } else {
                 previous->next = current->next;
             }
@@ -58,11 +56,11 @@ common_header_t *freelist_allocate_first(size_t size)
     return NULL;
 }
 
-common_header_t *freelist_allocate_best(size_t size)
+common_header_t *freelist_allocate_best(common_header_t **head, size_t size)
 {
-    common_header_t *current = list_head;
+    common_header_t *current = *head;
     common_header_t *previous = NULL;
-    common_header_t *min_current = list_head;
+    common_header_t *min_current = *head;
     common_header_t *min_previous = NULL;
     int min = -1;
     int diff;
@@ -97,7 +95,7 @@ common_header_t *freelist_allocate_best(size_t size)
         remainder->next = min_current->next;
 
         if (min_previous == NULL) {
-            list_head = remainder;
+            *head = remainder;
         }
         else {
             min_previous->next = remainder;
@@ -110,7 +108,7 @@ common_header_t *freelist_allocate_best(size_t size)
 
     //give away the whole block if there is no enough space for another header
     if (min_previous == NULL) {
-        list_head = min_current->next;
+        *head = min_current->next;
     } else {
         min_previous->next = min_current->next;
     }
@@ -137,14 +135,14 @@ void freelist_check_and_merge(common_header_t *block)
     }
 }
 
-void freelist_insert_and_merge(common_header_t *block)
+void freelist_insert_and_merge(common_header_t **head, common_header_t *block)
 {
-    common_header_t *current = list_head;
+    common_header_t *current = *head;
     common_header_t *previous = NULL;
 
     //if the memory is full already
-    if(list_head == NULL) {
-        list_head = block;
+    if(*head == NULL) {
+        *head = block;
         block->next = NULL;
         return;
     }
@@ -154,11 +152,11 @@ void freelist_insert_and_merge(common_header_t *block)
             block->next = current;
             freelist_check_and_merge(block);
             
-            if (current != list_head){
+            if (current != *head){
                 previous->next = block;
                 freelist_check_and_merge(previous);
             }
-            else list_head = block;
+            else *head = block;
 
             return;
         }
@@ -173,15 +171,15 @@ void freelist_insert_and_merge(common_header_t *block)
     freelist_check_and_merge(previous);
 }
 
-void freelist_insert(common_header_t *block)
+void freelist_insert(common_header_t **head, common_header_t *block)
 {
-    block->next = list_head;
-    list_head = block;
+    block->next = *head;
+    *head = block;
 }
 
-void freelist_dump()
+void freelist_dump(common_header_t **head)
 {
-    common_header_t *current = list_head;
+    common_header_t *current = *head;
 
     while (current != NULL) {
         printf("[%d]", current->size);
@@ -194,10 +192,10 @@ void freelist_dump()
     printf("\n");
 }
 
-size_t freelist_free_mem_size()
+size_t freelist_free_mem_size(common_header_t **head)
 {
     size_t total = 0;
-    common_header_t *current = list_head;
+    common_header_t *current = *head;
 
     while (current != NULL) {
         //convert int to size_t
@@ -209,12 +207,12 @@ size_t freelist_free_mem_size()
 }
 
 
-void freelist_stats(size_t* N, size_t* F, size_t* L){
+void freelist_stats(common_header_t **head, size_t* N, size_t* F, size_t* L){
     size_t n = 0;
     size_t f = 0;
     size_t l = 0;
 
-    common_header_t *current = list_head;
+    common_header_t *current = *head;
     
     while (current != NULL) {
         n += 1;
