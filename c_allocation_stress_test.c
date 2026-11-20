@@ -25,13 +25,16 @@
 #define N_REQUESTS   50000         // total number of allocation requests
 #define MAX_REQ_SIZE 32 * 1024     // cap on a single request size (bytes)
 #define D_FREQ       128           // every D_FREQ allocations, free a random live block to create holes
+#ifndef LIVE //LIVE now can be passed as macro using -DLIVE=123 during compilation
 #define LIVE         512           // number of concurrently live allocations to keep
+#endif
 
 // Random request size in [1..MAX_REQ_SIZE]
 static inline size_t rand_size() { return (size_t)(rand() % MAX_REQ_SIZE) + 1; }
 
 int main(void) {
-    srand(time(0)); // seed the rng
+    //SEED can be passed as a environment variable using SEED = 123 during execution
+    srand(getenv("SEED") ? atoi(getenv("SEED")) : time(0)); // seed the rng
   
     size_t success = 0;                          // # successful allocations so far
     size_t before_first_failure = N_REQUESTS;    // stays N_REQUESTS if no failure occurs
